@@ -16,5 +16,8 @@
     "memoizee": "^0.4.14",
     "mocha": "^5.2.0",
     "ramda": "^0.25.0"
+  },
+  "devDependencies": {
+    "prettier": "1.14.2"
   }
 }
