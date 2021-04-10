@@ -9,7 +9,7 @@ const memoize = (() => {
 })()
 
 const ilotalo = axios.create({
-  baseURL: 'http://matlu.fi/ilotalo'
+  baseURL: 'https://ilotalo.matlu.fi/'
 })
 
 const getReservations = () => {
