@@ -1,60 +1,40 @@
-const axios = require('axios')
-const cheerio = require('cheerio')
-const { DateTime } = require('luxon')
+const htmlParser = require('node-html-parser')
+const { parse } = require('date-fns')
 
-const memoize = (() => {
-  const m = require('memoizee')
-  return (fn, length, promise = true) =>
-    m(fn, { promise, length, maxAge: 1000 * 60 * 30, preFetch: true })
-})()
-
-const ilotalo = axios.create({
-  baseURL: 'https://ilotalo.matlu.fi/'
-})
+const simplifyHtml = data =>
+  /<tbody>(.*)<\/tbody>/g.exec(data.replace(/\n/g, ''))[0]
 
 const getReservations = () => {
   const parseReservations = data => {
     const getId = href => href && Number(href.split('&id=')[1])
     const parseDate = dateText =>
-      DateTime.fromFormat(dateText, 'dd.MM.yyyy HH:mm', {
-        zone: 'Europe/Helsinki'
-      }).toJSDate()
-    const serializeRow = (i, el) => ({
+      parse(dateText, 'dd.MM.yyyy HH:mm:ss', new Date())
+    const serializeRow = el => ({
       id: getId(
-        $(el)
-          .children('td:nth-child(2)')
-          .children('a')
-          .attr('href')
+        el
+          .querySelector('td:nth-child(2)')
+          .querySelector('a')
+          .getAttribute('href')
       ),
-      starts: parseDate(
-        $(el)
-          .children('td:nth-child(1)')
-          .text()
-      ),
-      name: $(el)
-        .children('td:nth-child(2)')
-        .text(),
-      association: $(el)
-        .children('td:nth-child(3)')
-        .text(),
-      closed:
-        $(el)
-          .children('td:nth-child(4)')
-          .text() === 'suljettu'
+      starts: parseDate(el.querySelector('td:nth-child(1)').text),
+      name: el.querySelector('td:nth-child(2)').text,
+      association: el.querySelector('td:nth-child(3)').text,
+      closed: el.querySelector('td:nth-child(4)').text === 'suljettu'
     })
-    const $ = cheerio.load(data)
-    const rowSelector = '#keyTable > table > tbody > tr'
 
-    const rows = $(rowSelector)
+    const root = htmlParser.parse(simplifyHtml(data))
+    const rowSelector = 'tbody > tr'
 
-    return rows.map(serializeRow).get()
+    const [_, ...rows] = root.querySelectorAll(rowSelector)
+
+    return rows.map(serializeRow)
   }
-  return ilotalo
-    .get('/index.php?page=reservation&f=3')
-    .then(res => res.data)
+
+  return fetch('https://ilotalo.matlu.fi/index.php?page=reservation&f=3')
+    .then(res => res.text())
     .then(parseReservations)
 }
 
 module.exports = {
-  getReservations: memoize(getReservations)
+  getReservations
 }

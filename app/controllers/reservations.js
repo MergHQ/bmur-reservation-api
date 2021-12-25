@@ -1,29 +1,36 @@
-const ilotalo = require('../integrations/ilotalo')
 const R = require('ramda')
 
-const filterUpcoming =
-  R.filter(r => r.starts && r.starts >= new Date())
-const filterPast =
-  R.filter(r => r.starts && r.starts <= new Date())
+const filterUpcoming = R.filter(
+  r => r.starts && new Date(r.starts) >= new Date()
+)
+const filterPast = R.filter(r => r.starts && new Date(r.starts) <= new Date())
 const filterByAssociation = association =>
   R.filter(r => r.association.toLowerCase() === association.toLowerCase())
 
-const getAllReservations = (req, res) =>
-  ilotalo.getReservations()
-    .then(req.params.association ? filterByAssociation(req.params.association) : R.identity)
-    .then(reservations => res.json(reservations))
+const toJsonResponse = data =>
+  new Response(JSON.stringify(data), {
+    headers: { 'Content-Type': 'application/json' }
+  })
 
-const getUpcomingReservations = (req, res) =>
-  ilotalo.getReservations()
+const getCached = () => ilotalo.get('calendar').then(JSON.parse)
+
+const getAllReservations = association =>
+  getCached()
+    .then(association ? filterByAssociation(association) : R.identity)
+    .then(toJsonResponse)
+
+const getUpcomingReservations = association =>
+  getCached()
     .then(filterUpcoming)
-    .then(req.params.association ? filterByAssociation(req.params.association) : R.identity)
-    .then(reservations => res.json(reservations))
+    .then(association ? filterByAssociation(association) : R.identity)
+    .then(toJsonResponse)
 
-const getPastReservations = (req, res) =>
-  ilotalo.getReservations()
+const getPastReservations = association =>
+  getCached()
+    .get('calendar')
     .then(filterPast)
-    .then(req.params.association ? filterByAssociation(req.params.association) : R.identity)
-    .then(reservations => res.json(reservations))
+    .then(association ? filterByAssociation(association) : R.identity)
+    .then(toJsonResponse)
 
 module.exports = {
   getAllReservations,

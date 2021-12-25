@@ -1,0 +1,22 @@
+name = "ilotalo-api"
+type = "webpack"
+
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+compatibility_date = "2021-12-12"
+
+kv_namespaces = [
+  { binding = "ilotalo", id = "768f27644dc1494ab4876c7670894d6b", preview_id = "85e6484db9fe400b865398b99829ba17" }
+]
+
+[build]
+command = "npm install"
+
+[build.upload]
+format = "service-worker"
+
+[triggers]
+crons = ["*/10 * * * *"]
+
