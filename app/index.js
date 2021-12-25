@@ -10,8 +10,9 @@ const {
   getPastReservations
 } = require('./controllers/reservations')
 
-const withAssociation = handler => ({ params }) => handler(params.association)
-const handle = handler => () => handler()
+const withAssociation = handler => ({ params, query }) =>
+  handler(params.association, query.from)
+const handle = handler => ({ query }) => handler(undefined, query.from)
 
 router.get('/reservations/all', handle(getAllReservations))
 router.get(
@@ -33,7 +34,6 @@ router.get(
 addEventListener('fetch', e => e.respondWith(router.handle(e.request)))
 
 addEventListener('scheduled', e => {
-  console.log('Event')
   e.waitUntil(
     getReservations().then(reservations =>
       ilotalo.put('calendar', JSON.stringify(reservations))

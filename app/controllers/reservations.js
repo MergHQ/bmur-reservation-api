@@ -1,11 +1,10 @@
-const R = require('ramda')
+import { filter, identity } from 'ramda'
 
-const filterUpcoming = R.filter(
-  r => r.starts && new Date(r.starts) >= new Date()
-)
-const filterPast = R.filter(r => r.starts && new Date(r.starts) <= new Date())
+const filterUpcoming = filter(r => r.starts && new Date(r.starts) >= new Date())
+const filterPast = filter(r => r.starts && new Date(r.starts) <= new Date())
 const filterByAssociation = association =>
-  R.filter(r => r.association.toLowerCase() === association.toLowerCase())
+  filter(r => r.association.toLowerCase() === association.toLowerCase())
+const filterFrom = from => filter(r => new Date(r.starts) >= new Date(from))
 
 const toJsonResponse = data =>
   new Response(JSON.stringify(data), {
@@ -14,26 +13,23 @@ const toJsonResponse = data =>
 
 const getCached = () => ilotalo.get('calendar').then(JSON.parse)
 
-const getAllReservations = association =>
+export const getAllReservations = (association, from) =>
   getCached()
-    .then(association ? filterByAssociation(association) : R.identity)
+    .then(association ? filterByAssociation(association) : identity)
+    .then(from ? filterFrom(from) : identity)
     .then(toJsonResponse)
 
-const getUpcomingReservations = association =>
+export const getUpcomingReservations = (association, from) =>
   getCached()
     .then(filterUpcoming)
-    .then(association ? filterByAssociation(association) : R.identity)
+    .then(association ? filterByAssociation(association) : identity)
+    .then(from ? filterFrom(from) : identity)
     .then(toJsonResponse)
 
-const getPastReservations = association =>
+export const getPastReservations = (association, from) =>
   getCached()
     .get('calendar')
     .then(filterPast)
-    .then(association ? filterByAssociation(association) : R.identity)
+    .then(association ? filterByAssociation(association) : identity)
+    .then(from ? filterFrom(from) : identity)
     .then(toJsonResponse)
-
-module.exports = {
-  getAllReservations,
-  getUpcomingReservations,
-  getPastReservations
-}

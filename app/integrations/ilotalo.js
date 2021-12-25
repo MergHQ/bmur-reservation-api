@@ -1,5 +1,5 @@
-const htmlParser = require('node-html-parser')
-const { parse } = require('date-fns')
+import { parse as parseHTML } from 'node-html-parser'
+import { parse } from 'date-fns'
 
 const simplifyHtml = data =>
   /<tbody>(.*)<\/tbody>/g.exec(data.replace(/\n/g, ''))[0]
@@ -22,7 +22,7 @@ const getReservations = () => {
       closed: el.querySelector('td:nth-child(4)').text === 'suljettu'
     })
 
-    const root = htmlParser.parse(simplifyHtml(data))
+    const root = parseHTML(simplifyHtml(data))
     const rowSelector = 'tbody > tr'
 
     const [_, ...rows] = root.querySelectorAll(rowSelector)
@@ -35,6 +35,6 @@ const getReservations = () => {
     .then(parseReservations)
 }
 
-module.exports = {
+export default {
   getReservations
 }
