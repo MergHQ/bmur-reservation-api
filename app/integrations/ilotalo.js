@@ -4,7 +4,7 @@ import { parse } from 'date-fns'
 const simplifyHtml = data =>
   /<tbody>(.*)<\/tbody>/g.exec(data.replace(/\n/g, ''))[0]
 
-const getReservations = () => {
+export const getReservations = () => {
   const parseReservations = data => {
     const getId = href => href && Number(href.split('&id=')[1])
     const parseDate = dateText =>
@@ -33,8 +33,4 @@ const getReservations = () => {
   return fetch('https://ilotalo.matlu.fi/index.php?page=reservation&f=3')
     .then(res => res.text())
     .then(parseReservations)
-}
-
-export default {
-  getReservations
 }
